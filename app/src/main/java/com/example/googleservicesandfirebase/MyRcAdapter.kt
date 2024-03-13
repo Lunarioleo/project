@@ -7,26 +7,44 @@ import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import com.squareup.picasso.Picasso
 
-class MyRcAdapter(val data: List<Photos>) : RecyclerView.Adapter<RecyclerViewHolder>() {
+class MyRcAdapter(var result: ArrayList<Results>, private val listener: (String, String, Float) -> Unit) :
+    RecyclerView.Adapter<RecyclerViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerViewHolder {
-        val listItemView = LayoutInflater.from(parent.context).inflate(R.layout.rc_item, parent, false)
+        val listItemView =
+            LayoutInflater.from(parent.context).inflate(R.layout.rc_item, parent, false)
         return RecyclerViewHolder(listItemView)
     }
 
 
-    override fun getItemCount(): Int  = data.count()
+    //data.size
+    override fun getItemCount(): Int = result.size - 1
+
 
 
 
     override fun onBindViewHolder(holder: RecyclerViewHolder, position: Int) {
-        val reference = data[position].photoReference
-//        val request = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=300&photo_reference=$reference&key=AIzaSyAbZFMlKGcXK9E1yn_BzwPh-m2Kdle3Ky4"
-//            Picasso.get()
-//                .load(request).into(holder.rcImage)
+        val item = result[position]
+        val name = item.name
+        val rate = item.rating
+        //val photoReference = item.photos[0].photoReference!!
+
+        if (!item.photos.isNullOrEmpty()) {
+            val photoReference = item.photos[0].photoReference!!
+            val request = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=300&photo_reference=$photoReference&key=AIzaSyB2qkthllFpLegExs4u-87BGJq3aFaEHFc"
+            Picasso.get().load(request).into(holder.rcImage)
+            holder.itemView.setOnClickListener { listener(name, photoReference, rate) }
+        }
+
+    }
+
+    fun updateData(newResults: ArrayList<Results>) {
+        result.clear()
+        result.addAll(newResults)
+        notifyDataSetChanged()
     }
 }
 
-class RecyclerViewHolder(item: View) : RecyclerView.ViewHolder(item){
-    val rcImage = item.findViewById<ImageView>(R.id.rcImage)
+class RecyclerViewHolder(item: View) : RecyclerView.ViewHolder(item) {
+    val rcImage: ImageView = item.findViewById(R.id.rcImage)
 }

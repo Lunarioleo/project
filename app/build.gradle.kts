@@ -30,6 +30,9 @@ android {
             )
         }
     }
+    buildFeatures {
+        viewBinding = true
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
@@ -41,7 +44,7 @@ android {
 
 dependencies {
 
-    implementation("androidx.core:core-ktx:1.9.0")
+    implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
@@ -60,13 +63,15 @@ dependencies {
 
 
     //mvvm
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
 
 
     //maps
     implementation ("com.google.android.gms:play-services-maps:18.2.0")
     //maps-utils
     implementation ("com.google.maps.android:android-maps-utils:3.5.3")
+    //location
+    implementation ("com.google.android.gms:play-services-location:18.0.0")
 
     //retrofit
     implementation ("com.squareup.retrofit2:retrofit:2.9.0")
