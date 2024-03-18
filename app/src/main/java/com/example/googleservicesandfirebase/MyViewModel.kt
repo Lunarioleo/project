@@ -1,19 +1,27 @@
 package com.example.googleservicesandfirebase
 
 
+import android.Manifest
 import android.app.Activity
 import android.app.Dialog
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.os.Looper
 import android.util.Log
+import android.view.View
+import android.view.ViewGroup
 import android.view.Window
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.airbnb.lottie.LottieAnimationView
+import com.airbnb.lottie.LottieDrawable
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
@@ -23,6 +31,7 @@ import com.google.maps.android.PolyUtil
 import com.squareup.picasso.Picasso
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 
 import kotlinx.coroutines.launch
@@ -43,10 +52,12 @@ class MyViewModel : ViewModel() {
 
 
 
+
     fun getData(location: String) {
+        _state.postValue(UiState.Processing)
         CoroutineScope(Dispatchers.IO).launch {
             val nearbyPlaces = async { repo.getNearbyPlaces(location) }.await()
-            _state.postValue(UiState.Processing(nearbyPlaces.body()!!))
+            _state.postValue(UiState.AdapterResult(nearbyPlaces.body()!!))
                 nearbyPlaces.body()?.let {
                     it.results.forEach { result ->
                         rating.add(result.rating)
@@ -55,7 +66,6 @@ class MyViewModel : ViewModel() {
                         locations.add(location)
 
                     }
-
                     _state.postValue(UiState.ResultLocations(locations))
                 }
             }
@@ -67,12 +77,11 @@ class MyViewModel : ViewModel() {
             route.body()?.let {
                 val polylinePoints = it.routes[0].overviewPolyline.points
                 val decodedPath = PolyUtil.decode(polylinePoints)
-                _state.postValue(UiState.ResultSimpleRoute(decodedPath))
-
-
+                _state.postValue(UiState.ResultSimpleRoute(decodedPath, it))
             }
         }
     }
+
      fun showCustomDialog(s: String, n: String, f: Float) {
         val dialog = Dialog(MainActivity.instance)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
@@ -94,11 +103,59 @@ class MyViewModel : ViewModel() {
         }
         dialog.show()
     }
+
+     fun checkPermissions(){
+        if (ActivityCompat.checkSelfPermission(
+                MainActivity.instance,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(
+                MainActivity.instance,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                MainActivity.instance,
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ),
+                MainActivity.LOCATION_PERMISSION_REQUEST_CODE
+            )
+            return
+        }
+    }
+
+    fun loadingAnimation(animation: LottieAnimationView){
+        GlobalScope.launch(Dispatchers.Main) {
+            animation.visibility = View.VISIBLE
+            animation.playAnimation()
+            animation.repeatMode = LottieDrawable.RESTART
+        }
+    }
+
+    fun hideAllViewsInContainer(container: ViewGroup, viewToExclude: View) {
+        for (i in 0 until container.childCount) {
+            val childView = container.getChildAt(i)
+            if (childView !== viewToExclude) {
+                childView.visibility = View.GONE
+            }
+        }
+    }
+
+    fun showAllViewsInContainer(container: ViewGroup) {
+        for (i in 0 until container.childCount) {
+            val childView = container.getChildAt(i)
+            childView.visibility = View.VISIBLE
+        }
+    }
+
+
     sealed class UiState {
-        class Processing (val full: PlacesResponse) : UiState()
-        class ResultSimpleRoute(val routePath: MutableList<LatLng>) : UiState()
-        class ResultPhotos(val photos: MutableList<String>, val name: MutableList<String>, val rating: MutableList<Float>) : UiState()
+        data object Processing : UiState()
+        class AdapterResult (val full: PlacesResponse) : UiState()
+        class ResultSimpleRoute(val routePath: MutableList<LatLng>, val res: DirectionsResponse ) : UiState()
         class ResultLocations(val locations: MutableList<Location>) : UiState()
-        //class Crash(val msg: String): UiState()
+
     }
 }

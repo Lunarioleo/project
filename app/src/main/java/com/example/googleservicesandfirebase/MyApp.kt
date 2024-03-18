@@ -13,7 +13,7 @@ class MyApp: Application() {
         instance = this
         repo = MyRepository(getApiClient())
     }
-
+    
     private fun getApiClient(): Retrofit{
         return Retrofit.Builder()
             .baseUrl("https://maps.googleapis.com/")

@@ -59,7 +59,8 @@ dependencies {
     //Picasso
     implementation ("com.squareup.picasso:picasso:2.8")
 
-
+    //anims
+    implementation ("com.airbnb.android:lottie:6.1.0")
 
 
     //mvvm
